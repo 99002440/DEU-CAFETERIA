@@ -20,10 +20,10 @@ sem_t tray_full_sem;
 
 pthread_mutex_t print_lock = PTHREAD_MUTEX_INITIALIZER; // ekrana yazdırırken ortalık karışmaması için
 
-pthread_mutex_t tray_lock = PTHREAD_MUTEX_INITIALIZER;  // anlık tray sayısına erişmek için
-pthread_mutex_t student_wait_lock = PTHREAD_MUTEX_INITIALIZER;  // yeni student geldiği zaman karşıklığı önlemek için
+pthread_mutex_t tray_lock = PTHREAD_MUTEX_INITIALIZER; // anlık tray sayısına erişmek için
+pthread_mutex_t student_wait_lock = PTHREAD_MUTEX_INITIALIZER; // yeni student geldiği zaman karşıklığı önlemek için
 pthread_mutex_t student_total_lock = PTHREAD_MUTEX_INITIALIZER; // toplam student sayısına erişmek için
-pthread_mutex_t cook_sleep_lock = PTHREAD_MUTEX_INITIALIZER;  // aşçının uyku durumu için
+pthread_mutex_t cook_sleep_lock = PTHREAD_MUTEX_INITIALIZER; // aşçının uyku durumu için
 
 int trays = 8; // current trays
 
@@ -37,7 +37,7 @@ static time_t START_TIME;
 
 void *cook(void *);
 void *student(void *);
-void monitor(void *);
+void monitor(void);
 
 int main()
 {
@@ -88,7 +88,7 @@ void *cook(void *arg)
 			printf(
 					ANSI_COLOR_GREEN"[ %ld ] - cook started to sleep \n" ANSI_COLOR_RESET,
 					time(NULL) - START_TIME);
-			monitor(NULL);
+			monitor();
 			pthread_mutex_unlock(&print_lock);
 
 			pthread_mutex_unlock(&tray_lock); // uyumadan önce tray lock'ı açılıyor.
@@ -103,7 +103,7 @@ void *cook(void *arg)
 			printf(
 					ANSI_COLOR_GREEN "[ %ld ] - cook awake \n" ANSI_COLOR_RESET,
 					time(NULL) - START_TIME);
-			monitor(NULL);
+			monitor();
 			pthread_mutex_unlock(&print_lock);
 		} else
 			pthread_mutex_unlock(&tray_lock);
@@ -115,7 +115,7 @@ void *cook(void *arg)
 		printf(
 				ANSI_COLOR_GREEN "[ %ld ] cook started to fill %d'th tray\n" ANSI_COLOR_RESET,
 				time(NULL) - START_TIME, total_tray + 1);
-		monitor(NULL);
+		monitor();
 		pthread_mutex_unlock(&print_lock);
 
 		while(time(0) - now < random_time)
@@ -131,7 +131,7 @@ void *cook(void *arg)
 		printf(
 				ANSI_COLOR_GREEN"[ %ld ] cook fished to fill %d'th tray\n" ANSI_COLOR_RESET,
 				time(NULL) - START_TIME, total_tray);
-		monitor(NULL);
+		monitor();
 		pthread_mutex_unlock(&print_lock);
 	}
 }
@@ -146,7 +146,7 @@ void *student(void *arg)
 	printf(
 	ANSI_COLOR_GREEN "[ %ld ] %d'th student arrived .. \n" ANSI_COLOR_RESET,
 			time(NULL) - START_TIME, student_total);
-	monitor(NULL);
+	monitor();
 	pthread_mutex_unlock(&print_lock);
 
 	pthread_mutex_lock(&student_wait_lock);
@@ -170,7 +170,7 @@ void *student(void *arg)
 	printf(
 			ANSI_COLOR_GREEN "[ %ld ] %d'th student fetched his tray .. \n" ANSI_COLOR_RESET,
 			time(NULL) - START_TIME, student_fetch);
-	monitor(NULL);
+	monitor();
 	pthread_mutex_unlock(&print_lock);
 
 	pthread_mutex_unlock(&tray_lock);
@@ -180,7 +180,7 @@ void *student(void *arg)
 	pthread_exit(NULL);
 }
 
-void monitor(void *arg)
+void monitor(void)
 {
 	printf("\n|-------------------------------------------------------|\n");
 	printf(ANSI_COLOR_RED "|\t\t\tCONVEYOR \t\t\t|\n" ANSI_COLOR_RESET);
